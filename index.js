@@ -1,3 +1,12 @@
-const my_module = require('my_module')
+const {randomNumber} = require('./random')
+const {randomArray} = require('./random')
 
-const local_module = require('./modules')
+
+console.log('randomNumber()')
+console.log(randomNumber())
+
+console.log('randomNumber(10, 15)')
+console.log(randomNumber(10, 15))
+
+console.log('randomArray()')
+console.log(randomArray())
