@@ -1,5 +1,3 @@
-const {randomChance} = require('./random')
-const randomChanceAnon = require('./randomAnon')
+const my_module = require('my_module')
 
-console.log(randomChance())
-console.log(randomChanceAnon())
+const local_module = require('./modules')
