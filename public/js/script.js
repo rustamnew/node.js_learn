@@ -1,0 +1,1 @@
+console.log('test console log from script.js file')
