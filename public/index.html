@@ -4,23 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главная</title>
+
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
     <h1>Главная</h1>
 
+    <img src="./images/evolution.png" alt="image">
+
+    <input type="text" placeholder="login" id="login-input">
+    <button onclick="getData()">Получить данные</button>
+
+    <form action="/api/save" method="POST">
+        <textarea name="data" cols="30" rows="10" id="data"></textarea>
+        <input type="hidden" value="admin" name="login">
+        <button type="submit">Отправить</button>
+    </form>
+
     <ul>
         <li>
-            <a href="/content">Контент</a>
+            <a href="/login">Вход</a>
         </li>
 
         <li>
-            <a href="/about">About</a>
+            <a href="/register">Регистрация</a>
         </li>
-        
+
         <li>
             <a href="/404">404</a>
         </li>
     </ul>
 
+    
+
+    <script src="./js/script.js"></script>
 </body>
 </html>

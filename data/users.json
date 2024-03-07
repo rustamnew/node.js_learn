@@ -1,0 +1,18 @@
+[
+    {
+        "login": "rustam_new",
+        "password": "12345",
+        "password_again": "12345"
+    },
+    {
+        "login": "admin",
+        "password": "admin",
+        "password_again": "admin",
+        "data": "asdasd11111111111111"
+    },
+    {
+        "login": "admin1",
+        "password": "admin",
+        "password_again": "admin"
+    }
+]

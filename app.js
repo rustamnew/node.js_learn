@@ -1,95 +1,117 @@
 const http = require('http')
-const fs = require('fs')
 const path = require('path')
-const PORT = 3500
+const express = require('express');
+const port = 3500
 
-const extContentTypes = {
-    '.html': 'text/html',
-    '.css': 'text/css',
-    '.js': 'text/javascript',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
-    '.json': 'application/json',
-    '.mp3': 'audio/mpeg',
-    '.mp4': 'video/mp4',
-    '.txt': 'text/plain',
-    '.pdf': 'application/pdf',
-    '.doc': 'application/msword',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    '.xls': 'application/vnd.ms-excel',
-    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'woff': 'application/font-woff',
-    'woff2': 'application/font-woff2',
-    'ttf': 'application/font-ttf',
-    'eot': 'application/vnd.ms-fontobject',
-    'otf': 'application/font-otf',
-    'swf': 'application/x-shockwave-flash',
-    'wasm': 'application/wasm'    
-}
+const validateForm = require('./utility/validateForm');
+const uniqueLogin = require('./utility/uniqueLogin');
+const registerUser = require('./utility/registerUser');
+const loginUser = require('./utility/loginUser');
+const saveUserData = require('./utility/saveUserData');
+const getUserData = require('./utility/getUserData');
 
+const app = express();
+app.use(express.json())
 
-http.createServer( function(req, res) {
-    const url = req.url
-
-    res.setHeader('Content-type', 'text/html; charset=utf-8;')
-
-    switch(url) {
-        case '/':
-            getFileContent(res, './public/index.html')
-            break;
-
-        case '/content':
-            getFileContent(res, './public/content.html')
-            break;
-
-        case '/about':
-            getFileContent(res, './public/about.html')
-            break;
-
-        case '/404':
-            getFileContent(res, './public/404.html')
-            break;
-
-        default:
-            const extname = String(path.extname(url)).toLocaleLowerCase()
-
-            if (extname in extContentTypes) {
-                getFileContent(res, './public' + url, extname)
-            }
-            if (fs.existsSync('./public' + url)) {
-                
-            } else {
-                getFileContent(res, './public/404.html')
-            }
-            break;
-    }
-}).listen(PORT)
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname, '/public/index.html'));
+});
+app.get('/register', function(req, res) {
+    res.sendFile(path.join(__dirname, '/public/register.html'));
+});
+app.get('/login', function(req, res) {
+    res.sendFile(path.join(__dirname, '/public/login.html'));
+});
+app.get('/js/script.js', function(req, res) {
+    res.sendFile(path.join(__dirname, '/public/js/script.js'));
+});
+app.get('/css/style.css', function(req, res) {
+    res.sendFile(path.join(__dirname, '/public/css/style.css'));
+});
+app.get('/images/evolution.png', function(req, res) {
+    res.sendFile(path.join(__dirname, '/public/images/evolution.png'));
+});
 
 
-function getFileContent(res, path, ext = false) {
-    /////
-    if (!ext) {
-        ext = String(path).toLocaleLowerCase().split('.')
-        ext = '.' + ext[ext.length - 1]
-    }
-    /////
-    res.setHeader('Content-type', extContentTypes[ext] ? extContentTypes[ext] : 'text/html')
 
-    const params = {}
-    if (ext !== '.png') {
-        params.encoding = 'utf8'
-    }
-    params.flag = 'r'
+app.get('/api/ping', (req, res) => {
+    res.json({
+        pong: 123
+    });
+});
 
-    fs.readFile(path, params, (error, data) => {
-        if (error) {
-            console.log(error)
-            res.statusCode = 404
-            res.end()
+app.post('/api/register', (req, res) => {
+    const dataPath = path.join(__dirname, './data/users.json')
+    const validate = validateForm(req.body)
+    const uniqueUser = uniqueLogin(req.body.login, dataPath)
+    
+    if (validate.vaild === true && uniqueUser) {
+        if (registerUser(req.body, dataPath)) {
+            res.json({
+                status: 'ok',
+                body: req.body
+            });
         }
-        res.end(data)
-    })
-}
+    } else {
+        if (!uniqueUser) {
+            validate.errorMessages.push('Такой пользователь уже существует')
+        }
+        res.json(validate);
+    } 
+});
+app.post('/api/login', (req, res) => {
+    const dataPath = path.join(__dirname, './data/users.json')
+    const validate = validateForm(req.body)
+    
+    if (validate.vaild === true ) {
+        const user = loginUser(req.body, dataPath)
+
+        if (user) {
+            res.json({
+                status: 'ok',
+                body: user
+            });
+        } else {
+            validate.errorMessages.push('Такой пользователь не существует')
+        }
+    } else {
+        res.json(validate);
+    } 
+});
+app.post('/api/save', (req, res) => {
+    const dataPath = path.join(__dirname, './data/users.json')
+    const user_login = req.body.login
+
+    const user_data_saved = saveUserData(user_login, req.body.data, dataPath)
+    
+    if ( user_data_saved ) {
+        res.json({
+            status: 'ok',
+            body: user_data_saved
+        });
+    } else {
+        res.json({
+            status: 'error',
+            body: req.body
+        });
+    } 
+});
+app.get('/api/user/:login', (req, res) => {
+    const dataPath = path.join(__dirname, './data/users.json')
+
+    const user_data = getUserData(req.params.login, dataPath)
+
+    if ( user_data ) {
+        res.json({
+            status: 'ok',
+            body: user_data
+        });
+    } else {
+        res.json({
+            status: 'error',
+            body: req.body
+        });
+    } 
+});
+
+app.listen(port);
